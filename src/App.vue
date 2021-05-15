@@ -1,14 +1,17 @@
 <template>
   <img alt="Vue logo" src="./assets/logo.png">
   <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <WangEditorBar></WangEditorBar>
 </template>
 
 <script>
 import HelloWorld from './components/HelloWorld.vue'
+import WangEditorBar from "@/components/WangEditorBar";
 
 export default {
   name: 'App',
   components: {
+    WangEditorBar,
     HelloWorld
   }
 }
