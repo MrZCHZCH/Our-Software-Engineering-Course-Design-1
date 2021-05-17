@@ -21,6 +21,7 @@
 
 <script>
 import {ref} from "vue";
+import axios from "axios";
 
 export default {
   name: "RegisterPage",
@@ -38,6 +39,7 @@ export default {
       return /^\w{3,15}@\w+\.[a-z]{2,3}$/.test(this.email);//前缀可以是字母或者数字，在3位以上15位以下，后缀是2位或者3位   \w:表示字母数字或者下划线
     },
     register(){
+      let this_=this
       if(!this.validateMail()){
         this.$alert('输入的邮箱格式不正确', '提醒', {
           confirmButtonText: '确定'
@@ -45,6 +47,20 @@ export default {
       }else if(this.password1!==this.password2){
         this.$alert('两次输入的密码不一致', '提醒', {
           confirmButtonText: '确定'
+        });
+      }else{
+        axios.post('/index/register', {
+          email: this.email,
+          password: this.password1,
+          nickName:this.nickname,
+          mytype:parseInt(this.type)
+        }).then(res => {
+          this_.$alert(res.data.msg, '提醒', {
+            confirmButtonText: '确定'
+          });
+          // if(res.data.respCode==200){
+          //
+          // }
         });
       }
     }
