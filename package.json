@@ -12,7 +12,8 @@
     "core-js": "^3.6.5",
     "element-plus": "^1.0.2-beta.44",
     "vue": "^3.0.0",
-    "wangeditor": "^4.6.17"
+    "wangeditor": "^4.6.17",
+    "ace-builds": "^1.4.12"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~4.5.0",
