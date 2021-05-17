@@ -1,13 +1,28 @@
 <template>
-  <div style="text-align: left">
-    <select v-model="content.selected" @change="changeEditor">
-      <option v-for="(l, idx) in languages" :key="idx" :value=l>{{l}}</option>
-    </select>
-    <span>Selected: {{content.selected}}</span>
+  <div>
+    <el-row>
+      <el-col :span="6">
+        <div class="grid-content bg-purple">
+          <el-select v-model="content.selected" @change="changeEditor">
+            <el-option v-for="(l, idx) in content.languages" :key="idx" :value=l :label=l></el-option>
+          </el-select>
+          <span>Selected: {{content.selected}}(测试用）</span>
+        </div>
+      </el-col>
+
+      <el-col :span="6" :offset="12">
+        <div class="grid-content bg-purple">
+          <el-button type="primary" plain @click="submitCode">提交代码</el-button>
+        </div>
+      </el-col>
+    </el-row>
+    <el-row>
+      <el-col :span="24">
+        <div ref="myeditor"></div>
+      </el-col>
+    </el-row>
   </div>
-  <div class="ace-container">
-    <div class="ace-editor" ref="myeditor"></div>
-  </div>
+
   <p>已输入代码（测试用）</p>
   <p>{{content.code}}</p>
 </template>
@@ -16,7 +31,10 @@
 import { onMounted, ref, reactive } from 'vue';
 import ace from 'ace-builds';
 import 'ace-builds/webpack-resolver'; // 在 webpack 环境中使用必须要导入
-import 'ace-builds/src-noconflict/theme-monokai'; // 主题
+import 'ace-builds/src-noconflict/theme-tomorrow'; // 主题(白色）
+import 'ace-builds/src-noconflict/theme-chrome'; // 灰
+import 'ace-builds/src-noconflict/theme-solarized_light'; // 黄
+import 'ace-builds/src-noconflict/theme-dreamweaver';  //
 import 'ace-builds/src-noconflict/mode-javascript'; // 语言模式
 import 'ace-builds/src-noconflict/mode-python';
 import 'ace-builds/src-noconflict/mode-c_cpp';
@@ -35,9 +53,10 @@ export default {
     const content = reactive({
       code: '',
       selected: 'JavaScript',
+      languages: ['JavaScript', 'C++', 'Python', 'Java'],
       options: {
         mode: 'ace/mode/javascript',
-        theme: 'ace/theme/monokai', // 主题样式
+        theme: 'ace/theme/tomorrow', // 主题样式
         tabSize: 2,
         maxLines: 20, // 最大行数，超过会自动出现滚动条
         minLines: 20, // 最小行数，还未到最大行数时，编辑器会自动伸缩大小
@@ -49,11 +68,6 @@ export default {
     onMounted(() =>{
       editor = ace.edit(myeditor.value, content.options)
       editor.getSession().setValue(content.code)
-      // Object.assign(editor.config, {
-      //   onchange(){
-      //     content.code = editor.getSession().getValue()
-      //   }
-      // })
       editor.on('change', function (){
         content.code = editor.getSession().getValue()
       })
@@ -80,16 +94,17 @@ export default {
       editor.getSession().setValue(content.code)
     }
 
+    const submitCode = () => {
+      if(content.code === '') {
+        alert("输入的代码为空！请先输入代码。")
+      }
+    }
+
     return {
+      submitCode,
       changeEditor,
       myeditor,
       content
-    }
-  },
-  data() {
-    return {
-
-      languages: ['JavaScript', 'C++', 'Python', 'Java']
     }
   },
   // watch: {
@@ -104,19 +119,19 @@ export default {
 </script>
 
 <style scoped>
-.editor {
-  height: 100%;
-  position: relative;
-  text-align: left;
-}
-.editor >>> .CodeMirror {
-  height: auto;
-  min-height: 250px;
-}
-.editor >>> .CodeMirror-scroll {
-  min-height: 250px;
-}
-.editor >>> .cm-s-rubyblue span.cm-string {
-  color: #f08047;
-}
+/*.editor {*/
+/*  height: 100%;*/
+/*  position: relative;*/
+/*  text-align: left;*/
+/*}*/
+/*.editor >>> .CodeMirror {*/
+/*  height: auto;*/
+/*  min-height: 250px;*/
+/*}*/
+/*.editor >>> .CodeMirror-scroll {*/
+/*  min-height: 250px;*/
+/*}*/
+/*.editor >>> .cm-s-rubyblue span.cm-string {*/
+/*  color: #f08047;*/
+/*}*/
 </style>
