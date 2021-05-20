@@ -13,7 +13,9 @@
 </template>
 
 <script>
-import { ref } from 'vue';
+import {ref} from 'vue';
+import axios from "axios";
+import {setCookie} from "@/cookies";
 export default {
   name: "LogInPage",
   setup() {
@@ -27,10 +29,29 @@ export default {
       return /^\w{3,15}@\w+\.[a-z]{2,3}$/.test(this.email);//前缀可以是字母或者数字，在3位以上15位以下，后缀是2位或者3位   \w:表示字母数字或者下划线
     },
     login(){
+      let this_=this
       if(!this.validateMail()){
         this.$alert('输入的邮箱格式不正确', '提醒', {
           confirmButtonText: '确定'
         });
+      }else{
+        axios.post('/index/login', {
+          email: this.email,
+          password: this.password
+        }).then(res => {
+          this_.$alert(res.data.msg, '提醒', {
+            confirmButtonText: '确定'
+          });
+          if(res.data.respCode==200){
+            setCookie('userId',res.data.user.userId,10)
+          }
+        });
+        //     .catch(err => {
+        //   this_.$alert('网络出错，请重试', '提醒', {
+        //     confirmButtonText: '确定'
+        //   });
+        //   console.log(err);
+        // })
       }
     }
   }

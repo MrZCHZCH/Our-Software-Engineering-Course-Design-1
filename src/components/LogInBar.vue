@@ -1,8 +1,8 @@
 <template>
   <div>
     <div v-if="loginState">
-      <el-link type="primary">{{ nickname }}</el-link>
-      <el-link type="primary" @click="logout">登出</el-link>
+      欢迎，{{ nickname }}
+      <el-button type="primary" @click="logout">登出</el-button>
     </div>
     <div v-else>
       <el-link type="primary">登录</el-link>
@@ -14,6 +14,7 @@
 <script>
 import {onMounted, ref} from 'vue';
 import {getCookie, setCookie,delCookie} from "@/cookies"
+import axios from "axios";
 export default {
   name: "LogInBar",
   setup(){
@@ -31,8 +32,12 @@ export default {
   },
   methods:{
     logout(){
-      delCookie('userId')
-      location. reload()
+      axios.post('/index/logout',{}).then(res => {
+        if(res.data.respCode==200){
+          delCookie('userId')
+          location. reload()
+        }
+      });
     }
   }
 }
