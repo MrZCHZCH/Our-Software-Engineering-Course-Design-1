@@ -13,30 +13,37 @@
 
 <script>
 import {onMounted, ref} from 'vue';
-import {getCookie, setCookie,delCookie} from "@/cookies"
+import {delCookie, getCookie, setCookie} from "@/cookies"
 import axios from "axios";
+
 export default {
   name: "LogInBar",
-  setup(){
+  setup() {
     const loginState = ref(false);
     const nickname = ref('');
     onMounted(() => {
-      setCookie('userId','666666',10)
+      setCookie('userId', '666666', 10)
       console.log(getCookie('userId'))
-      loginState.value=true
+      loginState.value = true
     });
-    return{
+    return {
       loginState,
       nickname
     }
   },
-  methods:{
-    logout(){
-      axios.post('/index/logout',{}).then(res => {
-        if(res.data.respCode==200){
-          delCookie('userId')
-          location. reload()
-        }
+  methods: {
+    logout() {
+      this.$confirm('退出登录, 是否继续?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        axios.post('/index/logout', {}).then(res => {
+          if (res.data.respCode == 200) {
+            delCookie('userId')
+            location.reload()
+          }
+        });
       });
     }
   }
