@@ -10,6 +10,7 @@
             <el-input v-model="title" placeholder="请输入标题"></el-input>
           </el-main>
         </el-container>
+        <!--如果是面试官，显示富文本编辑器；如果是候选者，直接显示题目-->
         <div ref='TextEditor'></div>
       </el-col>
       <el-col :span="12">
@@ -19,13 +20,12 @@
               <el-select v-model="content.selected" @change="changeEditor">
                 <el-option v-for="(l, idx) in content.languages" :key="idx" :value="idx" :label="l"></el-option>
               </el-select>
-<!--              <span>Selected: {{content.selected}}(测试用）</span>-->
             </div>
           </el-col>
 
           <el-col :span="12">
             <div class="grid-content bg-purple">
-              <el-button type="primary" plain @click="submitCode">提交代码</el-button>
+              <el-button v-if="userType === 2" type="primary" plain @click="submitCode" :disabled="content.submitBtnDisable">提交代码</el-button>
             </div>
           </el-col>
         </el-row>
@@ -33,9 +33,6 @@
       </el-col>
     </el-row>
   </div>
-
-<!--  <p>已输入代码（测试用）</p>-->
-<!--  <p>{{content.code}}</p>-->
 </template>
 
 <script>
@@ -56,13 +53,12 @@ import WangEditor from 'wangeditor';
 
 export default {
   name: "Editor",
-  // props: {
-  //   json: {
-  //     type: String,
-  //     default: '',
-  //   },
-  // },
-  setup() {
+  props: {
+    userId: Number, // 用户id
+    userType: Number  // 用户类型，1为面试官，2为候选人
+
+  },
+  setup(props) {
     const title = ref('')
     const TextEditor = ref();
     const myeditor = ref()
@@ -78,7 +74,8 @@ export default {
         minLines: 20, // 最小行数，还未到最大行数时，编辑器会自动伸缩大小
         fontSize: 16, // 编辑器内字体大小
         highlightActiveLine: true
-      }
+      },
+      submitBtnDisable: false  // 设置提交代码按钮是否可用
     })
     let myWangEditor;
     let CodeEditor;
@@ -86,22 +83,56 @@ export default {
       CodeEditor = ace.edit(myeditor.value, content.options)
       CodeEditor.getSession().setValue(content.code)
 
-      CodeEditor.on('change', function (){
-        autosavedata();
-      })
-
+      // 用户类型为面试官时才初始化文本编辑器
       myWangEditor = new WangEditor(TextEditor.value);
-      Object.assign(myWangEditor.config, {
-        onchange() {
-          autosavedata();
-        },
-      });
+      // Object.assign(myWangEditor.config, {
+      //   onchange() {
+      //     autosavedata();
+      //   },
+      // });
+      myWangEditor.config.onchange = autosavedata
+      // 如果是候选人，则直接隐藏菜单栏
+      if (props.userType === 2) {
+        myWangEditor.config.menus = []
+        myWangEditor.config.showFullScreen = false
+      }
       myWangEditor.create();
+
+      // 自动载入保存的内容
+      axios.get('/exercise/query',{
+        params: {exerciseId: 1}
+      }).then(res => {
+        if(res.data.respCode == 200) {
+          // 载入保存的代码和语言
+          content.code = res.data.exercise.code;
+          CodeEditor.getSession().setValue(content.code);
+          content.selected = res.data.exercise.typeOfCode;
+
+          title.value = res.data.exercise.title;
+          myWangEditor.txt.html(res.data.exercise.content)
+          // 将已提交的代码设置为已读
+          if(res.data.exercise.isFinished === 1){
+            CodeEditor.setReadOnly(true);
+          }
+        }
+
+        // 代码编辑器的change绑定一定要放在这里面
+        // 否则会因为axios的异步行为导致无法设置编辑器为只读
+        // 原来编辑器内容为空，query后读取到代码，即触发了一次change操作
+        // 但是change操作里会将ifFinished变为0，因此会出错
+        if (props.userType === 1){
+          CodeEditor.setReadOnly(true);
+        }
+        else {
+          CodeEditor.on('change', autosavedata);
+          myWangEditor.disable()
+        }
+      })
     })
 
+    // 自动保存函数
     const autosavedata =()=>{
       content.code = CodeEditor.getSession().getValue()
-
       axios.post('/exercise/save', {
         exerciseId: 1,
         title: title.value,
@@ -109,7 +140,6 @@ export default {
         studentId: 2,
         content: myWangEditor.txt.html(),
         isFinished: 0,  // 通过自动保存提交的代码是未完成的
-        isDeleted: 0,
         typeOfCode: content.selected,
         code: content.code
       }).then(res => {
@@ -118,6 +148,7 @@ export default {
       })
     }
 
+    // 切换代码语言函数
     const changeEditor = () => {
       // js
       if(content.selected === 0) {
@@ -143,6 +174,7 @@ export default {
       CodeEditor.getSession().setValue(content.code)
     }
 
+    // 最终提交代码函数
     const submitCode = () => {
       if(content.code === '') {
         alert("输入的代码为空！请先输入代码。")
@@ -156,12 +188,18 @@ export default {
         studentId: 2,
         content: myWangEditor.txt.html(),
         isFinished: 1,  // 通过提交按钮提交的代码一定是完成的
-        isDeleted: 0,
         typeOfCode: content.selected,
         code: content.code
       }).then(res => {
-        if(res.data.respCode === 200)
-          console.log('自动保存成功')
+        if(res.data.respCode == 200) {
+          alert('代码提交成功！');
+          // 代码提交成功后设置代码编辑器只读和按钮不可用
+          CodeEditor.setReadOnly(true);
+          content.submitBtnDisable = true;
+        }
+        else {
+          alert("代码保存失败，请稍后重试。")
+        }
       })
     }
 
