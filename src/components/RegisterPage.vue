@@ -1,20 +1,20 @@
 <template>
   <div style="text-align: center">
     <el-container>
-      <el-aside style="margin-top: 7px" width="auto">
-        <p>邮箱：</p>
-        <p>用户名：</p>
-        <p>密码：</p>
-        <p>确认密码：</p>
-        <p>用户类别：</p>
+      <el-aside style="margin-top: 8px" width="auto">
+        <p>邮箱:</p>
+        <p>用户名:</p>
+        <p>密码:</p>
+        <p>确认密码:</p>
+        <p>用户类别:</p>
       </el-aside>
       <el-main>
         <el-input v-model="email" placeholder="请输入邮箱"></el-input>
         <el-input v-model="nickname" placeholder="请输入用户名"></el-input>
         <el-input v-model="password1" placeholder="请输入密码" show-password></el-input>
         <el-input v-model="password2" placeholder="请再次输入密码" show-password></el-input>
-        <el-radio v-model="type" label="1">面试官</el-radio>
-        <el-radio v-model="type" label="2">候选人</el-radio>
+        <el-radio v-model="type" label="1" style="margin-top: 8px">面试官</el-radio>
+        <el-radio v-model="type" label="2" style="margin-top: 8px">候选人</el-radio>
       </el-main>
     </el-container>
     <el-button type="primary" @click="register">注册</el-button>
@@ -24,6 +24,7 @@
 <script>
 import {ref} from "vue";
 import axios from "axios";
+import {ElMessage} from 'element-plus'
 
 export default {
   name: "RegisterPage",
@@ -43,12 +44,24 @@ export default {
     register() {
       let this_ = this
       if (!this.validateMail()) {
-        this.$alert('输入的邮箱格式不正确', '提醒', {
-          confirmButtonText: '确定'
+        ElMessage.warning({
+          message: '输入的邮箱格式不正确',
+          type: 'warning'
+        });
+      } else if (this.password1.length < 8) {
+        ElMessage.warning({
+          message: '密码长度至少为8位',
+          type: 'warning'
+        });
+      } else if (this.nickname.length < 1) {
+        ElMessage.warning({
+          message: '用户名不能为空',
+          type: 'warning'
         });
       } else if (this.password1 !== this.password2) {
-        this.$alert('两次输入的密码不一致', '提醒', {
-          confirmButtonText: '确定'
+        ElMessage.warning({
+          message: '两次输入的密码不一致',
+          type: 'warning'
         });
       } else {
         axios.post('/index/register', {

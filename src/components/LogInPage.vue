@@ -2,8 +2,8 @@
   <div style="text-align: center">
     <el-container>
       <el-aside style="margin-top: 7px" width="auto">
-        <p>邮箱：</p>
-        <p>密码：</p>
+        <p>邮箱:</p>
+        <p>密码:</p>
       </el-aside>
       <el-main>
         <el-input v-model="email" placeholder="请输入邮箱"></el-input>
@@ -18,6 +18,7 @@
 import {ref} from 'vue';
 import axios from "axios";
 import {setCookie} from "@/cookies";
+import {ElMessage} from 'element-plus'
 
 export default {
   name: "LogInPage",
@@ -34,8 +35,14 @@ export default {
     login() {
       let this_ = this
       if (!this.validateMail()) {
-        this.$alert('输入的邮箱格式不正确', '提醒', {
-          confirmButtonText: '确定'
+        ElMessage.warning({
+          message: '输入的邮箱格式不正确',
+          type: 'warning'
+        });
+      } else if (this.password.length < 8) {
+        ElMessage.warning({
+          message: '密码长度至少为8位',
+          type: 'warning'
         });
       } else {
         axios.post('/index/login', {
