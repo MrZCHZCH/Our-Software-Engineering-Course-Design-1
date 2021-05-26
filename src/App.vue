@@ -1,18 +1,21 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
-  <WangEditorBar></WangEditorBar>
+  <log-in-page/>
+  <EListPage :user-id="1" :user-type="1"/>
+  <Editor :user-id="1" :user-type="1"/>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
-import WangEditorBar from "@/components/WangEditorBar";
 
+import Editor from "@/components/Editor";
+import EListPage from "@/components/EListPage";
+import LogInPage from "@/components/LogInPage";
 export default {
   name: 'App',
   components: {
-    WangEditorBar,
-    HelloWorld
+    LogInPage,
+    EListPage,
+    Editor
+
   }
 }
 </script>
