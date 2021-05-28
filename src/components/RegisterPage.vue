@@ -9,10 +9,10 @@
         <p>用户类别:</p>
       </el-aside>
       <el-main>
-        <el-input v-model="email" placeholder="请输入邮箱"></el-input>
-        <el-input v-model="nickname" placeholder="请输入用户名"></el-input>
-        <el-input v-model="password1" placeholder="请输入密码" show-password></el-input>
-        <el-input v-model="password2" placeholder="请再次输入密码" show-password></el-input>
+        <el-input v-model="email" placeholder="请输入邮箱" clearable></el-input>
+        <el-input v-model="nickname" placeholder="请输入用户名" clearable></el-input>
+        <el-input v-model="password1" placeholder="请输入密码" show-password clearable></el-input>
+        <el-input v-model="password2" placeholder="请再次输入密码" show-password clearable></el-input>
         <el-radio v-model="type" label="1" style="margin-top: 8px">面试官</el-radio>
         <el-radio v-model="type" label="2" style="margin-top: 8px">候选人</el-radio>
       </el-main>
@@ -48,9 +48,9 @@ export default {
           message: '输入的邮箱格式不正确',
           type: 'warning'
         });
-      } else if (this.password1.length < 8) {
+      } else if (this.password1.length < 8 && this.password1.length > 16) {
         ElMessage.warning({
-          message: '密码长度至少为8位',
+          message: '密码长度必须为8至15位',
           type: 'warning'
         });
       } else if (this.nickname.length < 1) {
@@ -73,9 +73,13 @@ export default {
           this_.$alert(res.data.msg, '提醒', {
             confirmButtonText: '确定'
           });
-          // if(res.data.respCode==200){
-          //
-          // }
+          if (res.data.respCode == 200) {
+            this.password1=''
+            this.nickname=''
+            this.email=''
+            this.password2=''
+            this.$emit('success')
+          }
         });
       }
     }

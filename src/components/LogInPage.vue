@@ -6,8 +6,8 @@
         <p>密码:</p>
       </el-aside>
       <el-main>
-        <el-input v-model="email" placeholder="请输入邮箱"></el-input>
-        <el-input v-model="password" placeholder="请输入密码" show-password></el-input>
+        <el-input v-model="email" placeholder="请输入邮箱" clearable></el-input>
+        <el-input v-model="password" placeholder="请输入密码" show-password clearable></el-input>
       </el-main>
     </el-container>
     <el-button type="primary" @click="login">登录</el-button>
@@ -39,9 +39,9 @@ export default {
           message: '输入的邮箱格式不正确',
           type: 'warning'
         });
-      } else if (this.password.length < 8) {
+      } else if (this.password.length < 8 && this.password.length > 16) {
         ElMessage.warning({
-          message: '密码长度至少为8位',
+          message: '密码长度必须为8至15位',
           type: 'warning'
         });
       } else {
@@ -54,14 +54,12 @@ export default {
           });
           if (res.data.respCode == 200) {
             setCookie('userId', res.data.user.userId, 10)
+            res.data.user.loginState = true
+            this.email=''
+            this.password=''
+            this.$emit('success', res.data.user)
           }
         });
-        //     .catch(err => {
-        //   this_.$alert('网络出错，请重试', '提醒', {
-        //     confirmButtonText: '确定'
-        //   });
-        //   console.log(err);
-        // })
       }
     }
   }
