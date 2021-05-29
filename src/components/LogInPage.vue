@@ -6,8 +6,8 @@
         <p>密码:</p>
       </el-aside>
       <el-main>
-        <el-input v-model="email" placeholder="请输入邮箱" clearable></el-input>
-        <el-input v-model="password" placeholder="请输入密码" show-password clearable></el-input>
+        <el-input v-model="email" clearable placeholder="请输入邮箱"></el-input>
+        <el-input v-model="password" clearable placeholder="请输入密码" show-password></el-input>
       </el-main>
     </el-container>
     <el-button type="primary" @click="login">登录</el-button>
@@ -17,7 +17,7 @@
 <script>
 import {ref} from 'vue';
 import axios from "axios";
-import {setCookie} from "@/cookies";
+// import {setCookie} from "@/cookies";
 import {ElMessage} from 'element-plus'
 
 export default {
@@ -35,15 +35,9 @@ export default {
     login() {
       let this_ = this
       if (!this.validateMail()) {
-        ElMessage.warning({
-          message: '输入的邮箱格式不正确',
-          type: 'warning'
-        });
+        ElMessage.warning('输入的邮箱格式不正确');
       } else if (this.password.length < 8 && this.password.length > 16) {
-        ElMessage.warning({
-          message: '密码长度必须为8至15位',
-          type: 'warning'
-        });
+        ElMessage.warning('密码长度必须为8至15位');
       } else {
         axios.post('/index/login', {
           email: this.email,
@@ -53,10 +47,10 @@ export default {
             confirmButtonText: '确定'
           });
           if (res.data.respCode == 200) {
-            setCookie('userId', res.data.user.userId, 10)
+            // setCookie('userId', res.data.user.userId, 10)
             res.data.user.loginState = true
-            this.email=''
-            this.password=''
+            this.email = ''
+            this.password = ''
             this.$emit('success', res.data.user)
           }
         });

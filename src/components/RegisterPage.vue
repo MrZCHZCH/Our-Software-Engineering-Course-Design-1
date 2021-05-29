@@ -9,10 +9,10 @@
         <p>用户类别:</p>
       </el-aside>
       <el-main>
-        <el-input v-model="email" placeholder="请输入邮箱" clearable></el-input>
-        <el-input v-model="nickname" placeholder="请输入用户名" clearable></el-input>
-        <el-input v-model="password1" placeholder="请输入密码" show-password clearable></el-input>
-        <el-input v-model="password2" placeholder="请再次输入密码" show-password clearable></el-input>
+        <el-input v-model="email" clearable placeholder="请输入邮箱"></el-input>
+        <el-input v-model="nickname" clearable placeholder="请输入用户名"></el-input>
+        <el-input v-model="password1" clearable placeholder="请输入密码" show-password></el-input>
+        <el-input v-model="password2" clearable placeholder="请再次输入密码" show-password></el-input>
         <el-radio v-model="type" label="1" style="margin-top: 8px">面试官</el-radio>
         <el-radio v-model="type" label="2" style="margin-top: 8px">候选人</el-radio>
       </el-main>
@@ -44,25 +44,13 @@ export default {
     register() {
       let this_ = this
       if (!this.validateMail()) {
-        ElMessage.warning({
-          message: '输入的邮箱格式不正确',
-          type: 'warning'
-        });
+        ElMessage.warning('输入的邮箱格式不正确');
       } else if (this.password1.length < 8 && this.password1.length > 16) {
-        ElMessage.warning({
-          message: '密码长度必须为8至15位',
-          type: 'warning'
-        });
+        ElMessage.warning('密码长度必须为8至15位');
       } else if (this.nickname.length < 1) {
-        ElMessage.warning({
-          message: '用户名不能为空',
-          type: 'warning'
-        });
+        ElMessage.warning('用户名不能为空');
       } else if (this.password1 !== this.password2) {
-        ElMessage.warning({
-          message: '两次输入的密码不一致',
-          type: 'warning'
-        });
+        ElMessage.warning('两次输入的密码不一致');
       } else {
         axios.post('/index/register', {
           email: this.email,
@@ -74,10 +62,10 @@ export default {
             confirmButtonText: '确定'
           });
           if (res.data.respCode == 200) {
-            this.password1=''
-            this.nickname=''
-            this.email=''
-            this.password2=''
+            this.password1 = ''
+            this.nickname = ''
+            this.email = ''
+            this.password2 = ''
             this.$emit('success')
           }
         });

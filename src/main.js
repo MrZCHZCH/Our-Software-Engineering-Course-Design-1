@@ -1,15 +1,14 @@
-import { createApp } from 'vue'
+import {createApp} from 'vue'
 import ElementPlus from 'element-plus';
 import 'element-plus/lib/theme-chalk/index.css';
 import App from './App.vue'
 import axios from 'axios'
-import { createRouter ,createWebHashHistory} from 'vue-router'
+import {createRouter, createWebHashHistory} from 'vue-router'
 import main from "@/view/main";
-axios.defaults.baseURL = 'http://127.0.0.1:8088'
-axios.defaults.timeout = 1000*10
+import {VueClipboard} from '@soerenmartius/vue3-clipboard'
 
 const routes = [
-    { path: '/', component: main }
+    {path: '/', component: main}
 ]
 
 const router = createRouter({
@@ -28,6 +27,9 @@ axios.interceptors.request.use(function (config) {
     return Promise.reject(error);
 });
 
+axios.defaults.baseURL = 'http://127.0.0.1:8088'
+axios.defaults.timeout = 1000 * 10
+
 // Add a response interceptor
 axios.interceptors.response.use(function (response) {
     // Any status code that lie within the range of 2xx cause this function to trigger
@@ -43,4 +45,5 @@ axios.interceptors.response.use(function (response) {
 const app = createApp(App)
 app.use(ElementPlus)
 app.use(router)
+app.use(VueClipboard)
 app.mount('#app')

@@ -18,17 +18,23 @@
   <el-button :disabled="!app.loginState||app.userType!=1||currentRow==null" @click="del">删除</el-button>
   <el-button :disabled="!app.loginState||currentRow==null" @click="enter">进入</el-button>
   <el-button :disabled="!app.loginState||app.userType!=1||currentRow==null" @click="create">创建</el-button>
-  <el-button :disabled="!app.loginState||currentRow==null" @click="share">分享</el-button>
+  <el-button v-clipboard:copy="shareLink"
+             v-clipboard:error="shareError"
+             v-clipboard:success="shareSuccess"
+             :disabled="!app.loginState||currentRow==null">
+    分享
+  </el-button>
 </template>
 
 <script>
-import {onMounted, ref, watch ,inject} from "vue";
+import {inject, onMounted, ref, watch} from "vue";
 import axios from "axios";
-import { useRouter } from "vue-router";
+import {useRoute} from "vue-router";
+import {ElMessage} from 'element-plus'
 
 export default {
   name: "EListPage",
-  inject:['app'],
+  inject: ['app'],
   setup() {
     const app = inject('app')
     const exercise = ref([])
@@ -67,15 +73,17 @@ export default {
           loadData()
         }
     )
-    const router = useRouter();
-    onMounted(()=>{
+    const router = useRoute();
+    onMounted(() => {
       loadData()
-      console.log(router)
+      if (router.query.exerciseId)
+        app.setExeId(router.query.exerciseId)
     })
     return {
       exercise,
       loadData,
       app,
+      shareLink: ref(''),
       currentRow: ref(null)
     }
   },
@@ -109,21 +117,12 @@ export default {
           }
         })
         if (re) {
-          this.$message({
-            type: 'success',
-            message: '删除成功'
-          });
+          ElMessage.success('删除成功')
         } else {
-          this.$message({
-            type: 'info',
-            message: '删除失败'
-          });
+          ElMessage.error('删除失败')
         }
       }).catch(() => {
-        this.$message({
-          type: 'info',
-          message: '已取消删除'
-        });
+        ElMessage('已取消删除')
       });
     },
     enter() {
@@ -134,9 +133,14 @@ export default {
     },
     handleCurrentChange(val) {
       this.currentRow = val;
+      if (val)
+        this.shareLink = "http://localhost:8080/#/?exerciseId=" + val.exerciseId
     },
-    share(){
-      console.log("没做")
+    shareSuccess() {
+      ElMessage.success('链接已复制成功');
+    },
+    shareError() {
+      ElMessage.error('链接复制失败');
     }
   }
 }
