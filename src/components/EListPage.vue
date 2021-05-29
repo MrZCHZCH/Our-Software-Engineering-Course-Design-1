@@ -15,26 +15,28 @@
         width="auto">
     </el-table-column>
   </el-table>
-  <el-button :disabled="!loginState||userType!=1||currentRow==null" @click="del">删除</el-button>
-  <el-button :disabled="!loginState||currentRow==null" @click="enter">进入</el-button>
-  <el-button :disabled="!loginState||userType!=1||currentRow==null" @click="create">创建</el-button>
+  <el-button :disabled="!app.loginState||app.userType!=1||currentRow==null" @click="del">删除</el-button>
+  <el-button :disabled="!app.loginState||currentRow==null" @click="enter">进入</el-button>
+  <el-button :disabled="!app.loginState||app.userType!=1||currentRow==null" @click="create">创建</el-button>
+  <el-button :disabled="!app.loginState||currentRow==null" @click="share">分享</el-button>
 </template>
 
 <script>
-import {ref, watchEffect} from "vue";
+import {onMounted, ref, watch ,inject} from "vue";
 import axios from "axios";
+import { useRouter } from "vue-router";
 
 export default {
   name: "EListPage",
-  props: ['userType', 'userId', 'loginState'],
-  emits: ['setExeId'],
-  setup(props) {
+  inject:['app'],
+  setup() {
+    const app = inject('app')
     const exercise = ref([])
     const loadData = () => {
-      if (props.loginState) {
+      if (app.loginState) {
         axios.get('/exercise/query_by_user', {
           params: {
-            userId: props.userId
+            userId: app.userId
           }
         }).then(res => {
           if (res.data.respCode == 200)
@@ -59,12 +61,21 @@ export default {
         ]
       }
     }
-    watchEffect(() => {
+    watch(
+        () => app.userId,
+        () => {
+          loadData()
+        }
+    )
+    const router = useRouter();
+    onMounted(()=>{
       loadData()
+      console.log(router)
     })
     return {
       exercise,
       loadData,
+      app,
       currentRow: ref(null)
     }
   },
@@ -116,13 +127,16 @@ export default {
       });
     },
     enter() {
-      this.$emit('setExeId', this.currentRow.exerciseId)
+      this.app.setExeId(this.currentRow.exerciseId)
     },
     create() {
       console.log("没做")
     },
     handleCurrentChange(val) {
       this.currentRow = val;
+    },
+    share(){
+      console.log("没做")
     }
   }
 }
