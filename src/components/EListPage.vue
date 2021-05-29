@@ -18,12 +18,7 @@
   <el-button :disabled="!app.loginState||app.userType!=1||currentRow==null" @click="del">删除</el-button>
   <el-button :disabled="!app.loginState||currentRow==null" @click="enter">进入</el-button>
   <el-button :disabled="!app.loginState||app.userType!=1||currentRow==null" @click="create">创建</el-button>
-  <el-button v-clipboard:copy="shareLink"
-             v-clipboard:error="shareError"
-             v-clipboard:success="shareSuccess"
-             :disabled="!app.loginState||currentRow==null">
-    分享
-  </el-button>
+  <el-button :disabled="!app.loginState||currentRow==null" @click="copy">分享</el-button>
 </template>
 
 <script>
@@ -31,6 +26,7 @@ import {inject, onMounted, ref, watch} from "vue";
 import axios from "axios";
 import {useRoute} from "vue-router";
 import {ElMessage} from 'element-plus'
+import useClipboard from 'vue-clipboard3'
 
 export default {
   name: "EListPage",
@@ -38,6 +34,9 @@ export default {
   setup() {
     const app = inject('app')
     const exercise = ref([])
+    const router = useRoute()
+    const shareLink = ref('')
+    const {toClipboard} = useClipboard()
     const loadData = () => {
       if (app.loginState) {
         axios.get('/exercise/query_by_user', {
@@ -73,7 +72,14 @@ export default {
           loadData()
         }
     )
-    const router = useRoute();
+    const copy = async () => {
+      try {
+        await toClipboard(shareLink.value)
+        ElMessage.success('链接已复制成功');
+      } catch (e) {
+        ElMessage.error('链接复制失败');
+      }
+    }
     onMounted(() => {
       loadData()
       if (router.query.exerciseId)
@@ -83,7 +89,8 @@ export default {
       exercise,
       loadData,
       app,
-      shareLink: ref(''),
+      shareLink,
+      copy,
       currentRow: ref(null)
     }
   },
@@ -135,12 +142,6 @@ export default {
       this.currentRow = val;
       if (val)
         this.shareLink = "http://localhost:8080/#/?exerciseId=" + val.exerciseId
-    },
-    shareSuccess() {
-      ElMessage.success('链接已复制成功');
-    },
-    shareError() {
-      ElMessage.error('链接复制失败');
     }
   }
 }

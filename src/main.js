@@ -5,7 +5,6 @@ import App from './App.vue'
 import axios from 'axios'
 import {createRouter, createWebHashHistory} from 'vue-router'
 import main from "@/view/main";
-import {VueClipboard} from '@soerenmartius/vue3-clipboard'
 
 const routes = [
     {path: '/', component: main}
@@ -45,5 +44,4 @@ axios.interceptors.response.use(function (response) {
 const app = createApp(App)
 app.use(ElementPlus)
 app.use(router)
-app.use(VueClipboard)
 app.mount('#app')
