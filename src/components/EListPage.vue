@@ -1,8 +1,17 @@
 <template>
+  <div style="text-align: center">
+    <el-button :disabled="!app.loginState||app.userType!=1||currentRow==null" @click="del">删除</el-button>
+    <el-button :disabled="!app.loginState||currentRow==null" @click="enter">进入</el-button>
+    <el-button :disabled="!app.loginState||app.userType!=1" @click="create">创建</el-button>
+    <el-button :disabled="!app.loginState||currentRow==null" @click="copy">分享</el-button>
+  </div>
   <el-table
       ref="singleTable"
       :data="exercise"
       :row-class-name="tableRowClassName"
+      :show-header="false"
+      border
+      height="500"
       highlight-current-row
       style="width: 100%"
       @current-change="handleCurrentChange">
@@ -15,14 +24,10 @@
         width="auto">
     </el-table-column>
   </el-table>
-  <el-button :disabled="!app.loginState||app.userType!=1||currentRow==null" @click="del">删除</el-button>
-  <el-button :disabled="!app.loginState||currentRow==null" @click="enter">进入</el-button>
-  <el-button :disabled="!app.loginState||app.userType!=1||currentRow==null" @click="create">创建</el-button>
-  <el-button :disabled="!app.loginState||currentRow==null" @click="copy">分享</el-button>
 </template>
 
 <script>
-import {inject, onMounted, ref, watch} from "vue";
+import {inject, onBeforeUnmount, onMounted, ref, watch} from "vue";
 import axios from "axios";
 import {useRoute} from "vue-router";
 import {ElMessage} from 'element-plus'
@@ -32,23 +37,24 @@ export default {
   name: "EListPage",
   inject: ['app'],
   setup() {
+    // 装载数据
     const app = inject('app')
     const exercise = ref([])
     const router = useRoute()
-    const shareLink = ref('')
-    const {toClipboard} = useClipboard()
-    const loadData = () => {
+    const loadData = async () => {
       if (app.loginState) {
-        axios.get('/exercise/query_by_user', {
+        return await axios.get('/exercise/query_by_user', {
           params: {
             userId: app.userId
           }
         }).then(res => {
           if (res.data.respCode == 200)
-            exercise.value = res.data.items
+            return res.data.items
+          else
+            return []
         })
       } else {
-        exercise.value = [
+        return [
           {
             exerciseId: 1,
             title: '这里展示的是你所属的面试题'
@@ -68,10 +74,43 @@ export default {
     }
     watch(
         () => app.userId,
-        () => {
-          loadData()
+        async () => {
+          exercise.value = await loadData()
         }
     )
+
+    // 刷新数据
+    const singleTable = ref()
+    let timer
+    const reData = async () => {
+      //!这里差新题目提醒
+      let data = await loadData()
+      let id = -1
+      if (currentRow.value){
+        let target = currentRow.value.exerciseId
+        for (let i = 0; i < data.length; i++)
+          if (data[i].exerciseId == target) {
+            id = i
+            break
+          }
+      }
+      exercise.value = data
+      if (id >= 0)
+        singleTable.value.setCurrentRow(exercise.value[id]);
+    }
+    onMounted(async () => {
+      if (router.query.exerciseId)
+        app.setExeId(router.query.exerciseId)
+      exercise.value = await loadData()
+      timer = setInterval(reData, 3000)
+    })
+    onBeforeUnmount(() => {
+      clearInterval(timer);
+    })
+
+    // 分享链接
+    const {toClipboard} = useClipboard()
+    const shareLink = ref('')
     const copy = async () => {
       try {
         await toClipboard(shareLink.value)
@@ -80,29 +119,37 @@ export default {
         ElMessage.error('链接复制失败');
       }
     }
-    onMounted(() => {
-      loadData()
-      if (router.query.exerciseId)
-        app.setExeId(router.query.exerciseId)
-    })
-    return {
-      exercise,
-      loadData,
-      app,
-      shareLink,
-      copy,
-      currentRow: ref(null)
-    }
-  },
-  methods: {
-    tableRowClassName({row, rowIndex}) {
+
+    // 列表处理
+    const currentRow = ref(null)
+    const tableRowClassName = ({row, rowIndex}) => {
       if (row.isFinished == 0) {
         return 'success-row';
       } else if (rowIndex < 3) {
         return 'warning-row';
       }
       return '';
-    },
+    }
+    const handleCurrentChange = (val) => {
+      currentRow.value = val;
+      if (val)
+        shareLink.value = "http://localhost:8080/#/?exerciseId=" + val.exerciseId
+    }
+
+    return {
+      exercise,
+      loadData,
+      app,
+      shareLink,
+      copy,
+      currentRow,
+      tableRowClassName,
+      handleCurrentChange,
+      singleTable
+    }
+  },
+  methods: {
+    // 删除
     del() {
       let exerciseId = this.currentRow.exerciseId
       let this_ = this
@@ -132,16 +179,13 @@ export default {
         ElMessage('已取消删除')
       });
     },
+    // 进入
     enter() {
       this.app.setExeId(this.currentRow.exerciseId)
     },
+    // 创建
     create() {
       console.log("没做")
-    },
-    handleCurrentChange(val) {
-      this.currentRow = val;
-      if (val)
-        this.shareLink = "http://localhost:8080/#/?exerciseId=" + val.exerciseId
     }
   }
 }
@@ -154,5 +198,9 @@ export default {
 
 .el-table .success-row {
   background: #f0f9eb;
+}
+
+.el-table__row {
+  font-size: 15px;
 }
 </style>
