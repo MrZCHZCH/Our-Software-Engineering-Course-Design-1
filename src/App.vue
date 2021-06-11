@@ -1,6 +1,8 @@
 <template>
-  <log-in-bar/>
-  <router-view></router-view>
+  <div id="app">
+    <log-in-bar/>
+    <router-view></router-view>
+  </div>
 </template>
 
 <script>
@@ -13,7 +15,7 @@ export default {
   components: {
     LogInBar
   },
-  provide () {
+  provide() {
     return {
       app: this
     }
@@ -53,5 +55,9 @@ export default {
   /*text-align: center;*/
   color: #2c3e50;
   /*margin-top: 60px;*/
+}
+
+.el-button {
+  font-size: medium;
 }
 </style>
