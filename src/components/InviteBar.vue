@@ -22,7 +22,7 @@ export default {
     const app = inject('app')
     const placeholder = ref("这里显示用户邀请信息")
     const setPlaceHolder = () => {
-      if (app.exerciseId >= 0 && app.userType == 1)
+      if (app.exerciseId > 0 && app.userType == 1)
         axios.get('/exercise/query', {
           params: {exerciseId: app.exerciseId}
         }).then(res => {
@@ -47,29 +47,32 @@ export default {
     return {
       input: ref(''),
       placeholder,
-      app
+      app,
+      setPlaceHolder
     }
   },
   methods: {
     validateMail() {         //验证邮件规则
-      return /^\w{3,15}@\w+\.[a-z]{2,3}$/.test(this.email);//前缀可以是字母或者数字，在3位以上15位以下，后缀是2位或者3位   \w:表示字母数字或者下划线
+      return /^\w{3,15}@\w+\.[a-z]{2,3}$/.test(this.input);//前缀可以是字母或者数字，在3位以上15位以下，后缀是2位或者3位   \w:表示字母数字或者下划线
     },
     invite() {
       let this_ = this
       if (!this.validateMail())
         ElMessage.warning('输入的邮箱格式不正确');
       else
-        axios.post('/exercise/invite', {
-          email: this.input,
-          exerciseId: this.app.exerciseId
-        }).then(res => {
-          if (res.data.respCode == 200) {
-            this_.input = ''
-            ElMessage.success('邀请成功')
+        axios.get('/exercise/invite', {
+          params: {
+            email: this.input,
+            exerciseId: this.app.exerciseId
           }
-          // else {
-          //   ElMessage.error('用户不存在')
-          // }
+        }).then(res => {
+          if (res.data.respCode == 200 && res.data.msg == '邀请成功!') {
+            this_.input = ''
+            ElMessage.success(res.data.msg)
+          } else {
+            ElMessage.error(res.data.msg)
+          }
+          this.setPlaceHolder()
         });
     }
   }

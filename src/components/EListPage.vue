@@ -30,7 +30,7 @@
 import {inject, onBeforeUnmount, onMounted, ref, watch} from "vue";
 import axios from "axios";
 import {useRoute} from "vue-router";
-import {ElMessage} from 'element-plus'
+import {ElMessage, ElNotification} from 'element-plus'
 import useClipboard from 'vue-clipboard3'
 
 export default {
@@ -49,7 +49,7 @@ export default {
           }
         }).then(res => {
           if (res.data.respCode == 200)
-            return res.data.items
+            return res.data.items.reverse()
           else
             return []
         })
@@ -83,10 +83,10 @@ export default {
     const singleTable = ref()
     let timer
     const reData = async () => {
-      //!这里差新题目提醒
+      let maxId = exercise.value[0].exerciseId
       let data = await loadData()
       let id = -1
-      if (currentRow.value){
+      if (currentRow.value) {
         let target = currentRow.value.exerciseId
         for (let i = 0; i < data.length; i++)
           if (data[i].exerciseId == target) {
@@ -97,6 +97,12 @@ export default {
       exercise.value = data
       if (id >= 0)
         singleTable.value.setCurrentRow(exercise.value[id]);
+      if (data[0].exerciseId > maxId && app.userType == 2)
+        ElNotification({
+          title: '提示',
+          message: '收到了新题目',
+          duration: 0
+        });
     }
     onMounted(async () => {
       if (router.query.exerciseId)
@@ -123,7 +129,7 @@ export default {
     // 列表处理
     const currentRow = ref(null)
     const tableRowClassName = ({row, rowIndex}) => {
-      if (row.isFinished == 0) {
+      if (row.isFinished == 1) {
         return 'success-row';
       } else if (rowIndex < 3) {
         return 'warning-row';
@@ -163,10 +169,12 @@ export default {
           params: {
             exerciseId: exerciseId
           }
-        }).then(res => {
+        }).then(async res => {
           if (res.data.respCode == 200) {
-            this_.loadData()
+            this_.exercise = await this_.loadData()
             this_.currentRow = null;
+            if (this_.app.exerciseId == exerciseId)
+              this_.app.setExeId(-1)
             re = true
           }
         })
@@ -185,7 +193,19 @@ export default {
     },
     // 创建
     create() {
-      console.log("没做")
+      let this_ = this
+      axios.post('/exercise/save', {
+        teacherId: this.app.userId,
+        title: '新建问题' + Date()
+      }).then(async res => {
+        if (res.data.respCode == 200) {
+          this_.exercise = await this_.loadData()
+          this_.singleTable.setCurrentRow(this_.exercise[0]);
+          ElMessage.success('创建成功')
+          this_.app.setExeId(res.data.exercise.exerciseId)
+        } else
+          ElMessage.error('创建失败')
+      })
     }
   }
 }
