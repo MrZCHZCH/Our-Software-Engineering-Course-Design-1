@@ -11,7 +11,7 @@
       :row-class-name="tableRowClassName"
       :show-header="false"
       border
-      height="500"
+      height="400"
       highlight-current-row
       style="width: 100%"
       @current-change="handleCurrentChange">

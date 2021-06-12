@@ -1,20 +1,22 @@
 <template>
-  <el-row>
-    <el-col :span="18">
-      <Editor :user-id="1" :user-type="1"/>
-    </el-col>
-    <el-col :span="6">
+  <el-container>
+    <el-aside width="380px">
+      <InviteBar></InviteBar>
       <EListPage/>
-    </el-col>
-  </el-row>
+    </el-aside>
+    <el-main>
+      <Editor/>
+    </el-main>
+  </el-container>
 </template>
 
 <script>
 import Editor from "@/components/Editor";
 import EListPage from "@/components/EListPage";
+import InviteBar from "@/components/InviteBar";
 export default {
   name: "main",
-  components: {EListPage, Editor},
+  components: {InviteBar, EListPage, Editor},
 }
 </script>
 
