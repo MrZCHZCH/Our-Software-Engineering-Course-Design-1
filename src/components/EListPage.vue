@@ -61,12 +61,9 @@ export default {
           }, {
             exerciseId: 2,
             title: '绿色代表该面试题已提交',
-            isFinished: 0
+            isFinished: 1
           }, {
             exerciseId: 3,
-            title: '红色代表这是新的面试题'
-          }, {
-            exerciseId: 4,
             title: '蓝色代表该面试题被选中'
           }
         ]
@@ -85,18 +82,12 @@ export default {
     const reData = async () => {
       let maxId = exercise.value[0].exerciseId
       let data = await loadData()
-      let id = -1
-      if (currentRow.value) {
-        let target = currentRow.value.exerciseId
-        for (let i = 0; i < data.length; i++)
-          if (data[i].exerciseId == target) {
-            id = i
-            break
-          }
-      }
+      let selected = null
+      if (currentRow.value)
+        selected = data.find(item => item.exerciseId === currentRow.value.exerciseId)
       exercise.value = data
-      if (id >= 0)
-        singleTable.value.setCurrentRow(exercise.value[id]);
+      if (selected)
+        singleTable.value.setCurrentRow(selected);
       if (data[0].exerciseId > maxId && app.userType == 2)
         ElNotification({
           title: '提示',
@@ -128,12 +119,9 @@ export default {
 
     // 列表处理
     const currentRow = ref(null)
-    const tableRowClassName = ({row, rowIndex}) => {
-      if (row.isFinished == 1) {
+    const tableRowClassName = ({row}) => {
+      if (row.isFinished == 1)
         return 'success-row';
-      } else if (rowIndex < 3) {
-        return 'warning-row';
-      }
       return '';
     }
     const handleCurrentChange = (val) => {
