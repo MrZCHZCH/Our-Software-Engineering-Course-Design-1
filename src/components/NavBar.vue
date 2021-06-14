@@ -3,8 +3,8 @@
     <div>
       <el-menu v-if="!app.loginState" default-active="1" mode="horizontal" style="font-weight: bold">
         <el-menu-item index="1">软工车队课设</el-menu-item>
-        <el-menu-item style="float: right" @click="drawer_register = true">注册</el-menu-item>
-        <el-menu-item style="float: right" @click="drawer_login = true">登录</el-menu-item>
+        <el-menu-item style="float: right" @click="dialog_register = true">注册</el-menu-item>
+        <el-menu-item style="float: right" @click="dialog_login = true">登录</el-menu-item>
       </el-menu>
       <el-menu v-else default-active="1" mode="horizontal" style="font-weight: bold">
         <el-menu-item index="1">软工车队课设</el-menu-item>
@@ -12,35 +12,45 @@
         <el-menu-item style="float: right">欢迎，{{ app.nickname }}</el-menu-item>
       </el-menu>
     </div>
-    <el-drawer v-model="drawer_login" :direction="direction" title="登录">
-      <log-in-page style="padding-left: 15px" @success="loginSuccess"/>
-    </el-drawer>
-    <el-drawer v-model="drawer_register" :direction="direction" title="注册">
-      <register-page style="padding-left: 15px" @success="registerSuccess"/>
-    </el-drawer>
+    <el-dialog v-model="dialog_login" center title="登录" width="600px">
+      <log-in-page @success="loginSuccess"/>
+    </el-dialog>
+    <el-dialog v-model="dialog_register" center title="注册" width="600px">
+      <register-page @success="registerSuccess"/>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import {onMounted, ref} from 'vue';
+import {inject, onMounted, ref} from 'vue';
 import {delCookie, getCookie} from "@/cookies"
 import axios from "axios";
 import LogInPage from "@/components/LogInPage";
 import RegisterPage from "@/components/RegisterPage";
 
 export default {
-  name: "LogInBar",
+  name: "NavBar",
   components: {RegisterPage, LogInPage},
   inject: ['app'],
   setup() {
+    const app = inject('app')
     onMounted(() => {
-      console.log(getCookie('token'))
-      // this.app.setLogin(data)
+      if (getCookie('token')) {
+        axios.get('/index/getUser', {
+          params: {token: getCookie('token')}
+        }).then(res => {
+          if (res.data.userId) {
+            res.data.loginState = true
+            app.setLogin(res.data)
+          } else
+            delCookie('token')
+        });
+      }
     })
     return {
-      drawer_login: ref(false),
-      drawer_register: ref(false),
-      direction: ref('rtl')
+      dialog_login: ref(false),
+      dialog_register: ref(false),
+      app
     }
   },
   methods: {
@@ -65,11 +75,12 @@ export default {
       });
     },
     loginSuccess(data) {
-      this.drawer_login = false
+      this.dialog_login = false
       this.app.setLogin(data)
     },
     registerSuccess() {
-      this.drawer_register = false
+      this.dialog_register = false
+      this.dialog_login = true
     }
   }
 }

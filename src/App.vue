@@ -1,19 +1,19 @@
 <template>
   <div id="app">
-    <log-in-bar/>
+    <nav-bar/>
     <router-view></router-view>
   </div>
 </template>
 
 <script>
 
-import LogInBar from "@/components/LogInBar";
 import {ref} from "vue";
+import NavBar from "@/components/NavBar";
 
 export default {
   name: 'App',
   components: {
-    LogInBar
+    NavBar
   },
   provide() {
     return {
@@ -54,6 +54,7 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   /*text-align: center;*/
   color: #2c3e50;
+  min-width: 1024px;
   /*margin-top: 60px;*/
 }
 
