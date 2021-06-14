@@ -7,17 +7,17 @@
             <p>标题：</p>
           </el-aside>
           <el-main>
-            <el-input v-model="title" placeholder="请输入标题"></el-input>
+            <el-input v-on:change="saveContent" v-model="title" placeholder="请输入标题" :readonly="content.titleReadOnly"></el-input>
           </el-main>
         </el-container>
         <!--如果是面试官，显示富文本编辑器；如果是候选者，直接显示题目-->
-        <div ref='TextEditor'></div>
+        <div ref='textEditor'></div>
       </el-col>
       <el-col :span="12">
         <el-row>
           <el-col :span="12">
             <div class="grid-content bg-purple">
-              <el-select v-model="content.selected" @change="changeEditor">
+              <el-select v-model="content.selected" :disabled="content.selectedDisable">
                 <el-option v-for="(l, idx) in content.languages" :key="idx" :value="idx" :label="l"></el-option>
               </el-select>
             </div>
@@ -25,18 +25,18 @@
 
           <el-col :span="12">
             <div class="grid-content bg-purple">
-              <el-button v-if="userType === 2" type="primary" plain @click="submitCode" :disabled="content.submitBtnDisable">提交代码</el-button>
+              <el-button v-if="app.userType === 2 && app.loginState" type="primary" plain @click="submitCode" :disabled="content.submitBtnDisable">提交代码</el-button>
             </div>
           </el-col>
         </el-row>
-        <div ref="myeditor"></div>
+        <div ref="codeEditor"></div>
       </el-col>
     </el-row>
   </div>
 </template>
 
 <script>
-import {onMounted, ref, reactive, onBeforeUnmount} from 'vue';
+import {onMounted, ref, reactive, onBeforeUnmount, inject, watch} from 'vue';
 import ace from 'ace-builds';
 import 'ace-builds/webpack-resolver'; // 在 webpack 环境中使用必须要导入
 import 'ace-builds/src-noconflict/theme-tomorrow'; // 主题(白色）
@@ -53,18 +53,16 @@ import WangEditor from 'wangeditor';
 
 export default {
   name: "Editor",
-  props: {
-    userId: Number, // 用户id
-    userType: Number  // 用户类型，1为面试官，2为候选人
-
-  },
-  setup(props) {
+  inject:['app'],
+  setup() {
+    const app = inject('app')
     const title = ref('')
-    const TextEditor = ref();
-    const myeditor = ref()
+    const textEditor = ref()
+    const codeEditor = ref()
     const content = reactive({
-      code: '',
       selected: 0,
+      teacherId: -1,
+      studentId: -1,
       languages: ['JavaScript', 'C++', 'Python', 'Java'],
       options: {
         mode: 'ace/mode/javascript',
@@ -75,126 +73,144 @@ export default {
         fontSize: 16, // 编辑器内字体大小
         highlightActiveLine: true
       },
-      submitBtnDisable: false  // 设置提交代码按钮是否可用
+      submitBtnDisable: true,  // 设置提交代码按钮是否可用
+      selectedDisable: true,
+      allLoadFinished: false,
+      titleReadOnly: true
     })
-    let myWangEditor;
-    let CodeEditor;
+    let wangEditor
+    let aceEditor
+    let autoLoadTimer
+
     onMounted(() =>{
-      CodeEditor = ace.edit(myeditor.value, content.options)
-      CodeEditor.getSession().setValue(content.code)
+      aceEditor = ace.edit(codeEditor.value, content.options)
+      aceEditor.getSession().setValue('')
 
-      // 用户类型为面试官时才初始化文本编辑器
-      myWangEditor = new WangEditor(TextEditor.value);
-      // Object.assign(myWangEditor.config, {
-      //   onchange() {
-      //     autosavedata();
-      //   },
-      // });
-      myWangEditor.config.onchange = autosavedata
-      // 如果是候选人，则直接隐藏菜单栏
-      if (props.userType === 2) {
-        myWangEditor.config.menus = []
-        myWangEditor.config.showFullScreen = false
-      }
-      myWangEditor.create();
+      wangEditor = new WangEditor(textEditor.value);
+      wangEditor.config.showFullScreen = false
+      wangEditor.create();
 
-      // 自动载入保存的内容
-      axios.get('/exercise/query',{
-        params: {exerciseId: 1}
-      }).then(res => {
-        if(res.data.respCode == 200) {
-          // 载入保存的代码和语言
-          content.code = res.data.exercise.code;
-          CodeEditor.getSession().setValue(content.code);
-          content.selected = res.data.exercise.typeOfCode;
-
-          title.value = res.data.exercise.title;
-          myWangEditor.txt.html(res.data.exercise.content)
-          // 将已提交的代码设置为已读
-          if(res.data.exercise.isFinished === 1){
-            CodeEditor.setReadOnly(true);
-          }
-        }
-
-        // 代码编辑器的change绑定一定要放在这里面
-        // 否则会因为axios的异步行为导致无法设置编辑器为只读
-        // 原来编辑器内容为空，query后读取到代码，即触发了一次change操作
-        // 但是change操作里会将ifFinished变为0，因此会出错
-        if (props.userType === 1){
-          CodeEditor.setReadOnly(true);
-        }
-        else {
-          CodeEditor.on('change', autosavedata);
-          myWangEditor.disable()
-        }
-      })
+      aceEditor.setReadOnly(true)
+      wangEditor.disable()
     })
 
-    // 自动保存函数
-    const autosavedata =()=>{
-      content.code = CodeEditor.getSession().getValue()
-      axios.post('/exercise/save', {
-        exerciseId: 1,
-        title: title.value,
-        teacherId: 1,
-        studentId: 2,
-        content: myWangEditor.txt.html(),
-        isFinished: 0,  // 通过自动保存提交的代码是未完成的
-        typeOfCode: content.selected,
-        code: content.code
-      }).then(res => {
-        if(res.data.respCode == 200)
-          console.log('自动保存成功')
-      })
+    onBeforeUnmount(() => {
+      wangEditor.destroy();
+      wangEditor = null;
+      clearInterval(autoLoadTimer)
+    });
+
+    const loadCode = () => {
+      if (app.loginState && app.exerciseId != -1 && app.userType == 1) {
+        axios.get('/exercise/query',{
+          params: {exerciseId: app.exerciseId}
+        }).then(res => {
+          if(res.data.respCode == 200) {
+            let newCode = res.data.exercise.code
+            if (newCode != aceEditor.getSession().getValue()) {
+              aceEditor.setReadOnly(false)
+              aceEditor.getSession().setValue(newCode)
+              aceEditor.setReadOnly(true)
+            }
+          }
+        })
+      }
+      console.log("loadCode")
+    }
+
+    const saveCode = () => {
+      if (app.loginState && app.userType == 2 && app.exerciseId != -1 && content.allLoadFinished) {
+        axios.post('/exercise/save', {
+          exerciseId: app.exerciseId,
+          teacherId: content.teacherId,
+          studentId: content.studentId,
+          isFinished: 0,  // 通过自动保存提交的代码是未完成的
+          typeOfCode: content.selected,
+          code: aceEditor.getSession().getValue()
+        }).then(res => {
+          if(res.data.respCode == 200)
+            console.log('自动保存成功')
+        })
+      }
+    }
+
+    const loadContent = () => {
+      if (app.loginState && app.exerciseId != -1 && app.userType == 2) {
+        axios.get('/exercise/query',{
+          params: {exerciseId: app.exerciseId}
+        }).then(res => {
+          if(res.data.respCode == 200) {
+            // 载入试题的信息
+            title.value = res.data.exercise.title
+            wangEditor.enable()
+            wangEditor.txt.html(res.data.exercise.content)
+            wangEditor.disable()
+            aceEditor.focus()
+          }
+        })
+      }
+      console.log('load c')
+    }
+
+    const saveContent = () => {
+      if (app.loginState && app.userType == 1 && app.exerciseId != -1 && content.allLoadFinished) {
+        content.code = aceEditor.getSession().getValue()
+        axios.post('/exercise/save', {
+          exerciseId: app.exerciseId,
+          title: title.value,
+          content: wangEditor.txt.html(),
+        }).then(res => {
+          if(res.data.respCode == 200)
+            console.log('自动保存成功')
+        })
+      }
     }
 
     // 切换代码语言函数
-    const changeEditor = () => {
+    const changeEditor = ()=> {
       // js
       if(content.selected === 0) {
-        CodeEditor.getSession().setMode('ace/mode/javascript');
-        CodeEditor.getSession().setTabSize(2);
+        aceEditor.getSession().setMode('ace/mode/javascript');
+        aceEditor.getSession().setTabSize(2);
       }
       // c++
       else if(content.selected === 1) {
-        CodeEditor.getSession().setMode('ace/mode/c_cpp');
-        CodeEditor.getSession().setTabSize(4);
+        aceEditor.getSession().setMode('ace/mode/c_cpp');
+        aceEditor.getSession().setTabSize(4);
       }
       // python
       else if(content.selected === 2) {
-        CodeEditor.getSession().setMode('ace/mode/python')
-        CodeEditor.getSession().setTabSize(4);
+        aceEditor.getSession().setMode('ace/mode/python')
+        aceEditor.getSession().setTabSize(4);
       }
       // java
       else if(content.selected === 3) {
-        CodeEditor.getSession().setMode('ace/mode/java');
-        CodeEditor.getSession().setTabSize(4);
+        aceEditor.getSession().setMode('ace/mode/java');
+        aceEditor.getSession().setTabSize(4);
       }
-      content.code = ''
-      CodeEditor.getSession().setValue(content.code)
     }
 
     // 最终提交代码函数
-    const submitCode = () => {
-      if(content.code === '') {
+    const submitCode = ()=> {
+      if(aceEditor.getSession().getValue() == '') {
         alert("输入的代码为空！请先输入代码。")
         return;
       }
 
       axios.post('/exercise/save', {
-        exerciseId: 1,
+        exerciseId: app.exerciseId,
         title: title.value,
-        teacherId: 1,
-        studentId: 2,
-        content: myWangEditor.txt.html(),
+        teacherId: content.teacherId,
+        studentId: content.studentId,
+        content: wangEditor.txt.html(),
         isFinished: 1,  // 通过提交按钮提交的代码一定是完成的
         typeOfCode: content.selected,
-        code: content.code
+        code: aceEditor.getSession().getValue()
       }).then(res => {
         if(res.data.respCode == 200) {
           alert('代码提交成功！');
           // 代码提交成功后设置代码编辑器只读和按钮不可用
-          CodeEditor.setReadOnly(true);
+          aceEditor.setReadOnly(true);
           content.submitBtnDisable = true;
         }
         else {
@@ -203,31 +219,134 @@ export default {
       })
     }
 
-    onBeforeUnmount(() => {
-      myWangEditor.destroy();
-      myWangEditor = null;
-    });
+    // LoginState监测的处理函数
+    const detachLoginState = ()=> {
+      if(app.loginState == false) {
+        clearInterval(autoLoadTimer)
+        wangEditor.enable()
+        wangEditor.txt.html('')
+        wangEditor.disable()
+
+        aceEditor.setReadOnly(false)
+        aceEditor.getSession().setValue('')
+        aceEditor.setReadOnly(true)
+
+        content.selectedDisable = true
+        content.submitBtnDisable = true
+        content.allLoadFinished = false
+        content.titleReadOnly = true
+      }
+      else {
+        wangEditor.enable()
+        aceEditor.setReadOnly(false)
+      }
+    }
+
+    // UserType监测的处理函数
+    const detachUserType = () => {
+      // 面试官
+      if (app.loginState && app.userType == 1) {
+        wangEditor.enable()
+        aceEditor.setReadOnly(true)
+
+        autoLoadTimer = setInterval(loadCode, 5000)
+        wangEditor.config.onchange = saveContent
+
+        content.selectedDisable = true
+        content.submitBtnDisable = true
+        content.titleReadOnly = false
+      }
+      // 候选者
+      else if (app.loginState && app.userType == 2) {
+        wangEditor.disable()
+        aceEditor.setReadOnly(false)
+
+        autoLoadTimer = setInterval(loadContent, 5000)
+        aceEditor.on('change', saveCode)
+
+        content.selectedDisable = false
+        content.titleReadOnly = true
+      }
+    }
+
+    // ExerciseId监测的处理函数，自动加载对应的试题信息
+    const autoLoadExercise = ()=> {
+      if (app.exerciseId != -1) {
+        content.allLoadFinished = false
+        content.submitBtnDisable = false
+        axios.get('/exercise/query',{
+          params: {exerciseId: app.exerciseId}
+        }).then(res => {
+          if(res.data.respCode == 200) {
+            // 载入试题的各种信息
+            content.teacherId = res.data.teacherId
+            content.studentId = res.data.studentId
+            title.value = res.data.exercise.title;
+            content.selected = res.data.exercise.typeOfCode;
+
+            // 载入保存的代码和题目
+            aceEditor.setReadOnly(false)
+            aceEditor.getSession().setValue(res.data.exercise.code);
+            wangEditor.enable()
+            wangEditor.txt.html(res.data.exercise.content)
+            // 面试官
+            if (app.userType == 1) {
+              aceEditor.setReadOnly(true)
+            }
+            // 候选者
+            if (app.userType == 2) {
+              wangEditor.disable()
+            }
+
+            // 将已提交的代码设置为已读
+            if(res.data.exercise.isFinished == 1){
+              aceEditor.setReadOnly(true);
+              content.submitBtnDisable = true
+            }
+            content.allLoadFinished = true
+          }
+        })
+      }
+      else {
+        content.submitBtnDisable = true
+      }
+    }
+
+    watch(() => app.loginState, detachLoginState)
+    watch(() => app.userType, detachUserType)
+    watch(() => app.exerciseId, autoLoadExercise)
+    watch(() => content.selected, changeEditor)
 
     return {
+      app,
       submitCode,
       changeEditor,
-      myeditor,
+      codeEditor,
       content,
-      TextEditor,
-      title
+      textEditor,
+      title,
+      saveContent
     }
   },
-  // watch: {
-  //   json(val) {
-  //     const editorValue = this.editor.getValue()
-  //     if (val !== editorValue) {
-  //       this.editor.setValue(this.json)
-  //     }
-  //   },
-  // },
+  methods:{
+
+  }
 }
 </script>
 
+<style>
+.w-e-toolbar {
+  z-index: 2!important;
+}
+.w-e-menu {
+  z-index: 2 !important;
+}
+.w-e-text-container {
+  z-index: 1 !important;
+}
+</style>
+
 <style scoped>
+
 
 </style>
