@@ -29,7 +29,7 @@ import LogInPage from "@/components/LogInPage";
 import RegisterPage from "@/components/RegisterPage";
 
 export default {
-  name: "LogInBar",
+  name: "NavBar",
   components: {RegisterPage, LogInPage},
   inject: ['app'],
   setup() {

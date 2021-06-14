@@ -80,20 +80,24 @@ export default {
     const singleTable = ref()
     let timer
     const reData = async () => {
-      let maxId = exercise.value[0].exerciseId
+      let maxId = -1
+      if (exercise.value[0])
+        maxId = exercise.value[0].exerciseId
       let data = await loadData()
-      let selected = null
-      if (currentRow.value)
-        selected = data.find(item => item.exerciseId === currentRow.value.exerciseId)
-      exercise.value = data
-      if (selected)
-        singleTable.value.setCurrentRow(selected);
-      if (data[0].exerciseId > maxId && app.userType == 2)
-        ElNotification({
-          title: '提示',
-          message: '收到了新题目',
-          duration: 0
-        });
+      if (data.length > 0) {
+        let selected = null
+        if (currentRow.value)
+          selected = data.find(item => item.exerciseId === currentRow.value.exerciseId)
+        exercise.value = data
+        if (selected)
+          singleTable.value.setCurrentRow(selected);
+        if (data[0].exerciseId > maxId && app.userType == 2)
+          ElNotification({
+            title: '提示',
+            message: '收到了新题目',
+            duration: 0
+          });
+      }
     }
     onMounted(async () => {
       if (router.query.exerciseId)

@@ -15,7 +15,7 @@
 <script>
 import {reactive} from 'vue';
 import axios from "axios";
-// import {setCookie} from "@/cookies";
+import {setCookie} from "@/cookies";
 import {ElMessage} from 'element-plus'
 
 export default {
@@ -48,7 +48,7 @@ export default {
             confirmButtonText: '确定'
           });
           if (res.data.respCode == 200) {
-            // setCookie('userId', res.data.user.userId, 10)
+            setCookie('token', res.data.token, 10)
             res.data.user.loginState = true
             this.form.email = ''
             this.form.password = ''
