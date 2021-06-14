@@ -37,7 +37,7 @@ axios.interceptors.response.use(function (response) {
     // Do something before request is sent
     // Any status code that lie within the range of 2xx cause this function to trigger
     // Do something with response data
-    if(response.data.code===404) {
+    if(response.data.respCode==404) {
         switch (response.data.msg) {
             case "没有token或token无效":
                 delCookie('token');

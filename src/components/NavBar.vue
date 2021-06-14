@@ -22,7 +22,7 @@
 </template>
 
 <script>
-import {onMounted, ref} from 'vue';
+import {inject, onMounted, ref} from 'vue';
 import {delCookie, getCookie} from "@/cookies"
 import axios from "axios";
 import LogInPage from "@/components/LogInPage";
@@ -33,13 +33,24 @@ export default {
   components: {RegisterPage, LogInPage},
   inject: ['app'],
   setup() {
+    const app = inject('app')
     onMounted(() => {
-      console.log(getCookie('token'))
-      // this.app.setLogin(data)
+      if (getCookie('token')) {
+        axios.get('/index/getUser', {
+          params: {token: getCookie('token')}
+        }).then(res => {
+          if (res.data.userId) {
+            res.data.loginState = true
+            app.setLogin(res.data)
+          } else
+            delCookie('token')
+        });
+      }
     })
     return {
       dialog_login: ref(false),
-      dialog_register: ref(false)
+      dialog_register: ref(false),
+      app
     }
   },
   methods: {
