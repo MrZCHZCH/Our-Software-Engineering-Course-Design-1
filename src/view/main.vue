@@ -5,18 +5,18 @@
       <EListPage/>
     </el-aside>
     <el-main>
-<!--      <Editor/>-->
+      <Editor/>
     </el-main>
   </el-container>
 </template>
 
 <script>
-// import Editor from "@/components/Editor";
+import Editor from "@/components/Editor";
 import EListPage from "@/components/EListPage";
 import InviteBar from "@/components/InviteBar";
 export default {
   name: "main",
-  components: {InviteBar, EListPage},
+  components: {InviteBar, EListPage, Editor},
 }
 </script>
 

@@ -88,6 +88,11 @@ export default {
 
       wangEditor = new WangEditor(textEditor.value);
       wangEditor.config.showFullScreen = false
+      wangEditor.config.excludeMenus = [
+        'emoticon',
+        'video',
+        'image'
+      ]
       wangEditor.create();
 
       aceEditor.setReadOnly(true)
@@ -106,6 +111,7 @@ export default {
           params: {exerciseId: app.exerciseId}
         }).then(res => {
           if(res.data.respCode == 200) {
+            content.selected = res.data.exercise.typeOfCode
             let newCode = res.data.exercise.code
             if (newCode != aceEditor.getSession().getValue()) {
               aceEditor.setReadOnly(false)
@@ -286,9 +292,21 @@ export default {
 
             // 载入保存的代码和题目
             aceEditor.setReadOnly(false)
-            aceEditor.getSession().setValue(res.data.exercise.code);
+            if (res.data.exercise.code == null) {
+              aceEditor.getSession().setValue('');
+            }
+            else {
+              aceEditor.getSession().setValue(res.data.exercise.code);
+            }
             wangEditor.enable()
-            wangEditor.txt.html(res.data.exercise.content)
+            if (res.data.exercise.content == null) {
+              console.log('null')
+              wangEditor.txt.html('')
+            }
+            else {
+              console.log('not null')
+              wangEditor.txt.html(res.data.exercise.content)
+            }
             // 面试官
             if (app.userType == 1) {
               aceEditor.setReadOnly(true)
