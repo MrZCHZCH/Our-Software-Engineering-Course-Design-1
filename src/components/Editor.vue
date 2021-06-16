@@ -121,7 +121,6 @@ export default {
           }
         })
       }
-      console.log("loadCode")
     }
 
     const saveCode = () => {
@@ -135,7 +134,7 @@ export default {
           code: aceEditor.getSession().getValue()
         }).then(res => {
           if(res.data.respCode == 200)
-            console.log('自动保存成功')
+            return 1
         })
       }
     }
@@ -155,7 +154,6 @@ export default {
           }
         })
       }
-      console.log('load c')
     }
 
     const saveContent = () => {
@@ -167,7 +165,7 @@ export default {
           content: wangEditor.txt.html(),
         }).then(res => {
           if(res.data.respCode == 200)
-            console.log('自动保存成功')
+            return 1
         })
       }
     }
@@ -300,11 +298,9 @@ export default {
             }
             wangEditor.enable()
             if (res.data.exercise.content == null) {
-              console.log('null')
               wangEditor.txt.html('')
             }
             else {
-              console.log('not null')
               wangEditor.txt.html(res.data.exercise.content)
             }
             // 面试官
@@ -313,6 +309,10 @@ export default {
             }
             // 候选者
             if (app.userType == 2) {
+              wangEditor.disable()
+            }
+            if (app.loginState == false) {
+              aceEditor.setReadOnly(true)
               wangEditor.disable()
             }
 
