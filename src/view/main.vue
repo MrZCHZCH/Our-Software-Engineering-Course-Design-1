@@ -1,8 +1,9 @@
 <template>
   <el-container>
-    <el-aside width="380px">
+    <el-aside width="400px">
       <InviteBar></InviteBar>
       <EListPage/>
+      <Comment></Comment>
     </el-aside>
     <el-main>
       <Editor/>
@@ -14,9 +15,10 @@
 import Editor from "@/components/Editor";
 import EListPage from "@/components/EListPage";
 import InviteBar from "@/components/InviteBar";
+import Comment from "@/components/Comment";
 export default {
   name: "main",
-  components: {InviteBar, EListPage, Editor},
+  components: {Comment, InviteBar, EListPage, Editor},
 }
 </script>
 

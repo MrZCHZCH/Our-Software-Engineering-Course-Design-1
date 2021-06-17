@@ -14,7 +14,7 @@
         <div ref='textEditor'></div>
       </el-col>
       <el-col :span="12">
-        <el-row>
+        <el-row style="margin-top: 19px">
           <el-col :span="12">
             <div class="grid-content bg-purple">
               <el-select v-model="content.selected" :disabled="content.selectedDisable">
@@ -29,7 +29,7 @@
             </div>
           </el-col>
         </el-row>
-        <div ref="codeEditor"></div>
+        <div ref="codeEditor" style="margin-top: 20px"></div>
       </el-col>
     </el-row>
   </div>
@@ -68,8 +68,8 @@ export default {
         mode: 'ace/mode/javascript',
         theme: 'ace/theme/tomorrow', // 主题样式
         tabSize: 2,
-        maxLines: 20, // 最大行数，超过会自动出现滚动条
-        minLines: 20, // 最小行数，还未到最大行数时，编辑器会自动伸缩大小
+        maxLines: 40, // 最大行数，超过会自动出现滚动条
+        minLines: 40, // 最小行数，还未到最大行数时，编辑器会自动伸缩大小
         fontSize: 16, // 编辑器内字体大小
         highlightActiveLine: true
       },
@@ -88,6 +88,7 @@ export default {
 
       wangEditor = new WangEditor(textEditor.value);
       wangEditor.config.showFullScreen = false
+      wangEditor.config.height = 677
       wangEditor.config.excludeMenus = [
         'emoticon',
         'video',
