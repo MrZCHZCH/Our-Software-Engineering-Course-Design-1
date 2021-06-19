@@ -5,11 +5,12 @@
         <div v-for="(comment,idx) in data.comments" :key="idx">
           <hr v-if="idx != 0"/>
           <li class="infinite-list-item">
-            <!--          <div>-->
-            <!--            <span>{{comments[comment - 1].nickname}}</span>-->
-            <!--            <hr/>-->
-            <!--            <span style="color: gray">{{data.comment[comment - 1].email}}</span>-->
-            <!--          </div>-->
+            <div>
+              <span>{{data.nickName[idx]}}</span>
+              <span style="float: right; color: gray; font-size: 14px">{{timestampToTime(comment.createTime)}}</span>
+              <br/>
+              <span style="color: gray; font-size: smaller">{{data.email[idx]}}</span>
+            </div>
             <div>
               <p>{{comment.content}}</p>
             </div>
@@ -54,6 +55,8 @@ export default {
     const app = inject('app')
     const data = reactive({
       comments: [],
+      nickName: [],
+      email: [],
       content: ''
     })
     let commentCounter = 0
@@ -77,9 +80,22 @@ export default {
         }).then(res => {
           if (res.data.respCode == 200) {
             data.comments = res.data.comments
+            // 根据replyId获取回复用户的信息
+            for(let i = 0; i < data.comments.length; i++) {
+              axios.get('user/query', {
+                params: {userId: data.comments[i].replyId}
+              }).then(res => {
+                if(res.data.respCode == 200) {
+                  data.nickName[i] = res.data.user.nickName
+                  data.email[i] = res.data.user.email
+                }
+              })
+            }
           }
           else {
             data.comments = []
+            data.nickName = []
+            data.email = []
           }
         })
       }
@@ -99,7 +115,8 @@ export default {
       axios.post('/comment/save', {
         exerciseId: this.app.exerciseId,
         replyId: this.app.userId,
-        content: this.data.content
+        content: this.data.content,
+        createTime: new Date()
       }).then(res => {
         if (res.data.respCode == 200) {
           this.data.content = ''
@@ -111,6 +128,10 @@ export default {
     },
     load() {
       this.commentCounter += 5
+    },
+    timestampToTime(timestamp) {
+      let time = new Date(timestamp)
+      return time.toLocaleString()
     }
   }
 }
