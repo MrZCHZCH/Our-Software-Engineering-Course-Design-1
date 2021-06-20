@@ -81,6 +81,7 @@ export default {
     let timer
     const reData = async () => {
       let maxId = -1
+      let oldlength = exercise.value.length
       if (exercise.value[0])
         maxId = exercise.value[0].exerciseId
       let data = await loadData()
@@ -91,7 +92,7 @@ export default {
         exercise.value = data
         if (selected)
           singleTable.value.setCurrentRow(selected);
-        if (data[0].exerciseId > maxId && app.userType == 2)
+        if ((data[0].exerciseId > maxId && app.userType == 2) || data.length > oldlength)
           ElNotification({
             title: '提示',
             message: '收到了新题目',
