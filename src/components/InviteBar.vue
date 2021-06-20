@@ -27,9 +27,14 @@ export default {
           params: {exerciseId: app.exerciseId}
         }).then(res => {
           if (res.data.respCode == 200)
-            if (res.data.exercise.studentId)
-              placeholder.value = '该题目已邀请用户：' + res.data.exercise.studentId
-            else
+            if (res.data.exercise.studentId) {
+              axios.get('user/query', {
+                params: {userId: res.data.exercise.studentId}
+              }).then(res => {
+                if (res.data.respCode == 200)
+                  placeholder.value = '该题目已邀请用户：' + res.data.user.nickName
+              })
+            } else
               placeholder.value = "输入待邀请用户邮箱"
         });
       else
