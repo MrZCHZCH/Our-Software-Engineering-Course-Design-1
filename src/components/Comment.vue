@@ -8,8 +8,6 @@
             <div>
               <span>{{data.nickName[idx]}}</span>
               <span style="float: right; color: gray; font-size: 14px">{{timestampToTime(comment.createTime)}}</span>
-              <br/>
-              <span style="color: gray; font-size: smaller">{{data.email[idx]}}</span>
             </div>
             <div>
               <p>{{comment.content}}</p>
@@ -56,7 +54,6 @@ export default {
     const data = reactive({
       comments: [],
       nickName: [],
-      email: [],
       content: ''
     })
     let commentCounter = 0
@@ -87,7 +84,6 @@ export default {
               }).then(res => {
                 if(res.data.respCode == 200) {
                   data.nickName[i] = res.data.user.nickName
-                  data.email[i] = res.data.user.email
                 }
               })
             }
@@ -95,7 +91,6 @@ export default {
           else {
             data.comments = []
             data.nickName = []
-            data.email = []
           }
         })
       }
