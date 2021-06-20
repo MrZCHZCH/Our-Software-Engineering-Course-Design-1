@@ -7,7 +7,7 @@
             <p>标题：</p>
           </el-aside>
           <el-main>
-            <el-input v-on:change="saveContent" v-model="title" placeholder="请输入标题" :readonly="content.titleReadOnly"></el-input>
+            <el-input v-on:change="saveContent" v-model="title" placeholder="请输入标题" :readonly="!app.loginState || app.userType == 2 || app.exerciseId == -1"></el-input>
           </el-main>
         </el-container>
         <!--如果是面试官，显示富文本编辑器；如果是候选者，直接显示题目-->
@@ -17,7 +17,7 @@
         <el-row style="margin-top: 19px">
           <el-col :span="12">
             <div class="grid-content bg-purple">
-              <el-select v-model="content.selected" :disabled="content.selectedDisable">
+              <el-select v-model="content.selected" :disabled="!app.loginState || app.userType == 1 || content.isFinished || app.exerciseId == -1">
                 <el-option v-for="(l, idx) in content.languages" :key="idx" :value="idx" :label="l"></el-option>
               </el-select>
             </div>
@@ -25,7 +25,7 @@
 
           <el-col :span="12">
             <div class="grid-content bg-purple">
-              <el-button v-if="app.userType === 2 && app.loginState" type="primary" plain @click="submitCode" :disabled="content.submitBtnDisable">提交代码</el-button>
+              <el-button v-if="app.userType === 2 && app.loginState" type="primary" plain @click="submitCode" :disabled="!app.loginState || app.userType == 1 || content.isFinished || app.exerciseId == -1">提交代码</el-button>
             </div>
           </el-col>
         </el-row>
@@ -63,6 +63,7 @@ export default {
       selected: 0,
       teacherId: -1,
       studentId: -1,
+      isFinished: 0,
       languages: ['JavaScript', 'C++', 'Python', 'Java'],
       options: {
         mode: 'ace/mode/javascript',
@@ -113,6 +114,7 @@ export default {
         }).then(res => {
           if(res.data.respCode == 200) {
             content.selected = res.data.exercise.typeOfCode
+            content.isFinished = res.data.exercise.isFinished
             let newCode = res.data.exercise.code
             if (newCode != aceEditor.getSession().getValue()) {
               aceEditor.setReadOnly(false)
@@ -130,7 +132,7 @@ export default {
           exerciseId: app.exerciseId,
           teacherId: content.teacherId,
           studentId: content.studentId,
-          isFinished: 0,  // 通过自动保存提交的代码是未完成的
+          isFinished: content.isFinished,  // 通过自动保存提交的代码是未完成的
           typeOfCode: content.selected,
           code: aceEditor.getSession().getValue()
         }).then(res => {
@@ -216,7 +218,7 @@ export default {
           alert('代码提交成功！');
           // 代码提交成功后设置代码编辑器只读和按钮不可用
           aceEditor.setReadOnly(true);
-          content.submitBtnDisable = true;
+          content.isFinished = 1
         }
         else {
           alert("代码保存失败，请稍后重试。")
@@ -236,10 +238,7 @@ export default {
         aceEditor.getSession().setValue('')
         aceEditor.setReadOnly(true)
 
-        content.selectedDisable = true
-        content.submitBtnDisable = true
         content.allLoadFinished = false
-        content.titleReadOnly = true
       }
       else {
         wangEditor.enable()
@@ -256,10 +255,6 @@ export default {
 
         autoLoadTimer = setInterval(loadCode, 5000)
         wangEditor.config.onchange = saveContent
-
-        content.selectedDisable = true
-        content.submitBtnDisable = true
-        content.titleReadOnly = false
       }
       // 候选者
       else if (app.loginState && app.userType == 2) {
@@ -268,9 +263,6 @@ export default {
 
         autoLoadTimer = setInterval(loadContent, 5000)
         aceEditor.on('change', saveCode)
-
-        content.selectedDisable = false
-        content.titleReadOnly = true
       }
     }
 
@@ -278,14 +270,14 @@ export default {
     const autoLoadExercise = ()=> {
       if (app.exerciseId != -1) {
         content.allLoadFinished = false
-        content.submitBtnDisable = false
         axios.get('/exercise/query',{
           params: {exerciseId: app.exerciseId}
         }).then(res => {
           if(res.data.respCode == 200) {
             // 载入试题的各种信息
-            content.teacherId = res.data.teacherId
-            content.studentId = res.data.studentId
+            content.teacherId = res.data.exercise.teacherId
+            content.studentId = res.data.exercise.studentId
+            content.isFinished = res.data.exercise.isFinished
             title.value = res.data.exercise.title;
             content.selected = res.data.exercise.typeOfCode;
 
@@ -320,14 +312,10 @@ export default {
             // 将已提交的代码设置为已读
             if(res.data.exercise.isFinished == 1){
               aceEditor.setReadOnly(true);
-              content.submitBtnDisable = true
             }
             content.allLoadFinished = true
           }
         })
-      }
-      else {
-        content.submitBtnDisable = true
       }
     }
 
