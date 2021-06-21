@@ -1,6 +1,6 @@
 # vueproject
 
-##注意
+## 注意
 由于WangEditor富文本编辑器默认使用wangeditor.txt.html(content)设置内容后会自动获取焦点，导致自动刷新面试题后会出现丢失原有焦点的问题。
 这个设定无法通过设置参数解决，因此需要更改WangEditor的源代码。具体更改方式如下：  
 使用npm install将所有依赖包下载后，在项目的
