@@ -60,7 +60,7 @@ export default {
           email: this.form.email,
           password: this.form.password1,
           nickName: this.form.nickname,
-          mytype: parseInt(this.type)
+          mytype: parseInt(this.form.type)
         }).then(res => {
           this_.$alert(res.data.msg, '提醒', {
             confirmButtonText: '确定'
