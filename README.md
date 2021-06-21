@@ -5,7 +5,7 @@
 这个设定无法通过设置参数解决，因此需要更改WangEditor的源代码。具体更改方式如下：  
 使用npm install将所有依赖包下载后，在项目的
 
->/node_modules/wangeditor/dist/wangeditor.js
+>./node_modules/wangeditor/dist/wangeditor.js
 
 在initSelection(editor, newLine)函数或约22542行找到如下代码  
 
