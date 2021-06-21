@@ -74,10 +74,7 @@ export default {
         fontSize: 16, // 编辑器内字体大小
         highlightActiveLine: true
       },
-      submitBtnDisable: true,  // 设置提交代码按钮是否可用
-      selectedDisable: true,
       allLoadFinished: false,
-      titleReadOnly: true
     })
     let wangEditor
     let aceEditor
@@ -95,7 +92,7 @@ export default {
         'video',
         'image'
       ]
-      wangEditor.create();
+      wangEditor.create()
 
       aceEditor.setReadOnly(true)
       wangEditor.disable()
@@ -153,7 +150,7 @@ export default {
             wangEditor.enable()
             wangEditor.txt.html(res.data.exercise.content)
             wangEditor.disable()
-            aceEditor.focus()
+            // aceEditor.focus()
           }
         })
       }
